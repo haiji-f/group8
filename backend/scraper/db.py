@@ -26,7 +26,7 @@ def upsert_horses(client: Client, horses: list[dict]) -> None:
 
 
 def delete_old_data(client: Client, days_to_keep: int = 14) -> int:
-    """race_date が cutoff より古いレースと関連データを削除する。戻り値は削除レース数。"""
+    """race_date が cutoff より古いレースと関連データを削除する。"""
     cutoff = (date.today() - timedelta(days=days_to_keep)).isoformat()
     resp = client.table("races").select("race_id").lt("race_date", cutoff).execute()
     old_ids = [r["race_id"] for r in resp.data]
