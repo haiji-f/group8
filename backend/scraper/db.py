@@ -15,17 +15,13 @@ def get_client() -> Client:
 
 
 def upsert_race(client: Client, race: dict) -> None:
-    client.table("races").upsert(
-        race, on_conflict="race_date,venue,race_no"
-    ).execute()
+    client.table("races").upsert(race, on_conflict="race_date,venue,race_no").execute()
 
 
 def upsert_horses(client: Client, horses: list[dict]) -> None:
     if not horses:
         return
-    client.table("horses").upsert(
-        horses, on_conflict="race_id,horse_no"
-    ).execute()
+    client.table("horses").upsert(horses, on_conflict="race_id,horse_no").execute()
 
 
 def upsert_trifecta_odds(client: Client, odds_list: list[dict]) -> int:
