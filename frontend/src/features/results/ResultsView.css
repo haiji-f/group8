@@ -1,0 +1,415 @@
+.results-container {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: 100%;
+  animation: scaleIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.results-header {
+  display: flex;
+  justify-content: center;
+}
+
+.award-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.trophy-icon {
+  color: #e67e22;
+  filter: drop-shadow(0 0 15px rgba(230, 126, 34, 0.5));
+  animation: bounceTrophy 2s infinite ease-in-out;
+}
+
+.results-subtitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #c084fc;
+  background: rgba(192, 132, 252, 0.1);
+  padding: 2px 10px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.results-title {
+  font-size: 38px;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0;
+  letter-spacing: -1px;
+}
+
+.results-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.payout-panel,
+.podium-panel {
+  background: rgba(30, 41, 59, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 20px;
+  padding: 24px;
+  backdrop-filter: blur(16px);
+  min-height: 480px;
+  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.01);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.panel-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #94a3b8;
+  margin: 0;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 10px;
+}
+
+/* Ticket Combo */
+.ticket-combo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.02);
+  border-radius: 16px;
+  padding: 24px 12px;
+  gap: 8px;
+}
+
+.ticket-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.ticket-rank-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.ticket-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  font-size: 20px;
+  font-weight: 800;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+}
+
+.ticket-name-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
+}
+
+.combo-arrow {
+  color: #475569;
+  margin-top: 10px;
+}
+
+/* Odds Stats Box */
+.odds-stats-box {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.odds-loading {
+  font-size: 14px;
+  color: #64748b;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+.stat-value {
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.stat-unit {
+  font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+  margin-left: 2px;
+}
+
+.odds-ratio {
+  font-size: 26px;
+  font-family: monospace;
+}
+
+.stat-row.highlight {
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  margin-top: 12px;
+  padding-top: 16px;
+}
+
+.stake-label {
+  font-size: 11px;
+  color: #64748b;
+  display: block;
+}
+
+.payout-amount {
+  font-size: 36px;
+  color: #e67e22;
+  text-shadow: 0 0 15px rgba(230, 126, 34, 0.25);
+  font-family: monospace;
+}
+
+.restart-wrapper {
+  margin-top: auto;
+}
+
+.restart-button {
+  width: 100%;
+  gap: 8px;
+}
+
+/* Podium Standings Visual */
+.visual-podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 200px;
+  margin-bottom: 8px;
+}
+
+.podium-place {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.podium-horse-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 8px 6px;
+  width: 90%;
+  margin-bottom: 8px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.podium-gate-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+.podium-horse-num {
+  font-size: 13px;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.podium-horse-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 75px;
+  margin-top: 2px;
+}
+
+.podium-horse-jockey {
+  font-size: 9px;
+  color: #64748b;
+}
+
+.podium-pedestal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border-radius: 8px 8px 0 0;
+}
+
+.podium-pedestal .pedestal-num {
+  font-size: 28px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.15);
+}
+
+/* Pedestal sizes & colors */
+.place-1 .podium-pedestal {
+  height: 90px;
+  background: linear-gradient(0deg, rgba(234, 179, 8, 0.1) 0%, rgba(234, 179, 8, 0.25) 100%);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  border-bottom: none;
+}
+.place-1 .pedestal-num {
+  color: rgba(234, 179, 8, 0.3) !important;
+}
+
+.place-2 .podium-pedestal {
+  height: 65px;
+  background: linear-gradient(0deg, rgba(148, 163, 184, 0.08) 0%, rgba(148, 163, 184, 0.2) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-bottom: none;
+}
+.place-2 .pedestal-num {
+  color: rgba(148, 163, 184, 0.25) !important;
+}
+
+.place-3 .podium-pedestal {
+  height: 45px;
+  background: linear-gradient(0deg, rgba(180, 83, 9, 0.05) 0%, rgba(180, 83, 9, 0.18) 100%);
+  border: 1px solid rgba(180, 83, 9, 0.2);
+  border-bottom: none;
+}
+.place-3 .pedestal-num {
+  color: rgba(180, 83, 9, 0.2) !important;
+}
+
+/* Full Standings List */
+.full-standings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  background: rgba(15, 23, 42, 0.3);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.standings-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  padding: 0 8px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.standings-header span {
+  flex: 1;
+}
+.standings-header span:first-child {
+  flex: 0.6;
+}
+.standings-header span:last-child {
+  flex: 0.8;
+  text-align: right;
+}
+
+.standings-row {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-radius: 6px;
+  background: rgba(30, 41, 59, 0.2);
+}
+
+.standings-row span {
+  flex: 1;
+}
+.standings-row .rank-num {
+  flex: 0.6;
+  font-size: 12px;
+  font-weight: 700;
+}
+.standings-row .gate-num-cell {
+  flex: 0.5;
+  font-size: 13px;
+  font-weight: 700;
+  color: #f8fafc;
+  border-left: 3px solid;
+  padding-left: 6px;
+}
+.standings-row .horse-name-cell {
+  flex: 1.5;
+  font-size: 13px;
+  color: #cbd5e1;
+  text-align: left;
+}
+.standings-row .odds-cell {
+  flex: 0.8;
+  font-size: 13px;
+  color: #94a3b8;
+  text-align: right;
+  font-family: monospace;
+}
+
+.text-gold {
+  color: #facc15;
+}
+.text-silver {
+  color: #cbd5e1;
+}
+.text-bronze {
+  color: #f97316;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounceTrophy {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@media (max-width: 900px) {
+  .results-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}

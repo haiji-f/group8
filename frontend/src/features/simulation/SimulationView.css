@@ -1,0 +1,166 @@
+.simulation-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.simulation-header {
+  text-align: left;
+  border-left: 4px solid var(--accent);
+  padding-left: 16px;
+  margin-bottom: 8px;
+}
+
+.race-sim-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+}
+
+.sim-intro-text {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.simulation-layout {
+  display: grid;
+  grid-template-columns: 560px 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+/* Arena Panel */
+.arena-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  width: 560px;
+}
+
+.canvas-wrapper {
+  background: rgba(7, 7, 8, 1);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  width: 560px;
+  height: 700px;
+}
+
+.physics-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Controls Bar */
+.controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+  background: rgba(18, 18, 20, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  box-sizing: border-box;
+}
+
+.control-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 110px;
+}
+
+.control-btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px !important;
+  width: 38px;
+  height: 38px;
+}
+
+/* Bottom horse badges section */
+.arena-badges-section {
+  width: 100%;
+  background: rgba(18, 18, 20, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.horse-badges-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.horse-badge-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.01);
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.horse-badge-item.finished {
+  font-weight: 800;
+  border-color: transparent;
+}
+
+.horse-badge-item.eliminated {
+  opacity: 0.15;
+  text-decoration: line-through;
+}
+
+/* Sidebar Leaderboard */
+.sidebar-panel {
+  height: 832px; /* aligns perfectly with canvas + controls + badges height */
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1080px) {
+  .simulation-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .sidebar-panel {
+    height: auto;
+  }
+
+  .canvas-wrapper {
+    width: 100%;
+    max-width: 560px;
+    height: auto;
+    aspect-ratio: 560/700;
+  }
+}

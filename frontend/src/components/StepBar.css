@@ -1,0 +1,46 @@
+.step-bar-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  backdrop-filter: none;
+}
+
+.step-capsule {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 22px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.01);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.5px;
+  cursor: default;
+}
+
+/* Active Selected Step */
+.step-capsule.active {
+  background: var(--accent);
+  color: #0c0d0e;
+  border-color: var(--accent);
+  box-shadow: 0 0 15px rgba(204, 164, 82, 0.25);
+}
+
+@media (max-width: 640px) {
+  .step-bar-container {
+    gap: 8px;
+  }
+  .step-capsule {
+    padding: 6px 14px;
+    font-size: 11px;
+  }
+}

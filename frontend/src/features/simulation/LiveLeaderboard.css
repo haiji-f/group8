@@ -1,0 +1,139 @@
+.live-leaderboard {
+  display: flex;
+  flex-direction: column;
+  background: rgba(18, 18, 20, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 32px;
+  height: 100%;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.leaderboard-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 24px 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Podium status capsules */
+.podium-status {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.status-capsule {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 14px 24px;
+  border-radius: 9999px;
+  box-sizing: border-box;
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 0.25s ease;
+}
+
+.capsule-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.capsule-label {
+  font-weight: 800;
+  min-width: 36px;
+}
+
+.capsule-gate-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 800;
+  margin-left: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.capsule-name {
+  margin-left: 10px;
+  flex-grow: 1;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+.capsule-status-tag {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.capsule-status-tag.text-muted {
+  color: #475569;
+}
+
+/* Capsule states */
+.status-capsule.confirmed {
+  background: var(--accent);
+  color: #0c0d0e;
+  border: 1px solid var(--accent);
+  box-shadow: 0 4px 15px rgba(204, 164, 82, 0.2);
+}
+
+.status-capsule.pending {
+  background: rgba(255, 255, 255, 0.02);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.status-capsule.waiting {
+  background: rgba(255, 255, 255, 0.01);
+  color: #475569;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* Guide box */
+.simulation-guide-box {
+  background: rgba(18, 18, 20, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 24px;
+}
+
+.guide-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+}
+
+.guide-description {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Trigger button wrapper */
+.live-action-wrapper {
+  margin-top: auto;
+  padding-top: 24px;
+}
+
+.w-full {
+  width: 100%;
+}
