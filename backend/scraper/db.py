@@ -1,5 +1,6 @@
 import logging
 import os
+from datetime import date, timedelta
 
 from supabase import Client, create_client
 
@@ -22,6 +23,23 @@ def upsert_horses(client: Client, horses: list[dict]) -> None:
     if not horses:
         return
     client.table("horses").upsert(horses, on_conflict="race_id,horse_no").execute()
+
+
+def delete_old_data(client: Client, days_to_keep: int = 14) -> int:
+    """race_date が cutoff より古いレースと関連データを削除する。戻り値は削除レース数。"""
+    cutoff = (date.today() - timedelta(days=days_to_keep)).isoformat()
+    resp = client.table("races").select("race_id").lt("race_date", cutoff).execute()
+    old_ids = [r["race_id"] for r in resp.data]
+    if not old_ids:
+        logger.info("delete_old_data: no old data (cutoff: %s)", cutoff)
+        return 0
+    for i in range(0, len(old_ids), BATCH_SIZE):
+        batch = old_ids[i : i + BATCH_SIZE]
+        client.table("trifecta_odds").delete().in_("race_id", batch).execute()
+        client.table("horses").delete().in_("race_id", batch).execute()
+    client.table("races").delete().lt("race_date", cutoff).execute()
+    logger.info("delete_old_data: deleted %d races before %s", len(old_ids), cutoff)
+    return len(old_ids)
 
 
 def upsert_trifecta_odds(client: Client, odds_list: list[dict]) -> int:

@@ -1,0 +1,33 @@
+name: Scraper
+
+on:
+  schedule:
+    - cron: "0 23 * * 5" # 土曜 08:00 JST (= 金曜 23:00 UTC)
+    - cron: "0 23 * * 6" # 日曜 08:00 JST (= 土曜 23:00 UTC)
+  workflow_dispatch: # 手動実行
+
+jobs:
+  scrape:
+    name: Collect race data
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+        working-directory: backend
+
+      - name: Run scraper
+        run: |
+          TODAY=$(TZ='Asia/Tokyo' date +%Y-%m-%d)
+          python -m scraper.main --dates "$TODAY"
+        working-directory: backend
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}

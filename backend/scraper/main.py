@@ -76,6 +76,9 @@ def main() -> None:
 
     client = db.get_client()
 
+    deleted = db.delete_old_data(client)
+    logger.info("[CLEANUP] 古いレース削除: %d件", deleted)
+
     total_races = 0
     total_horses = 0
     total_odds = 0
