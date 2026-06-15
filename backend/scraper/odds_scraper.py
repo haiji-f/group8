@@ -18,7 +18,7 @@ import logging
 import re
 import time
 import zlib
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import requests
 
@@ -41,7 +41,7 @@ def fetch_trifecta_odds(race_id: str, netkeiba_race_id: str) -> list[dict]:
     三連複 API から取得し、6通りの順列に展開して三連単オッズを返す。
     戻り値: (race_id, rank1, rank2, rank3, odds_value, scraped_at) のリスト
     """
-    scraped_at = datetime.now(timezone.utc).isoformat()
+    scraped_at = datetime.now(UTC).isoformat()
 
     raw = _fetch_sanrenfuku(netkeiba_race_id)
     if not raw:

@@ -4,6 +4,6 @@ def calc_ball_counts(
     odds_list = [h["win_odds"] if h["win_odds"] else default_odds for h in horses]
     weights = [1 / o for o in odds_list]
     total = sum(weights)
-    for h, w in zip(horses, weights):
+    for h, w in zip(horses, weights, strict=False):
         h["ball_count"] = max(round(w / total * K), 1)
     return horses

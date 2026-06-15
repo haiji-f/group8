@@ -1,6 +1,6 @@
+import logging
 import re
 import time
-import logging
 
 import requests
 

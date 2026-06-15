@@ -1,7 +1,7 @@
 import re
 import time
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import requests
 from bs4 import BeautifulSoup
@@ -130,7 +130,7 @@ def scrape_race(netkeiba_race_id: str, race_date: str) -> tuple[dict, list[dict]
                 "win_odds": win_odds,
             })
 
-    scraped_at = datetime.now(timezone.utc).isoformat()
+    scraped_at = datetime.now(UTC).isoformat()
     race = {
         "race_id": race_id,
         "netkeiba_race_id": netkeiba_race_id,
@@ -171,7 +171,6 @@ def _fetch_confirmed_win_odds(netkeiba_race_id: str) -> dict[int, float]:
 
         result: dict[int, float] = {}
         for tr in table.find_all("tr")[1:]:
-            horse_no_el = tr.find(class_=re.compile(r"^Num$|Txt_C"))
             odds_el = tr.find(class_=lambda c: c and "Odds" in c and "Txt_R" in c)
 
             # 馬番は "Num Txt_C" クラスのセル
@@ -197,7 +196,8 @@ def _fetch_confirmed_win_odds(netkeiba_race_id: str) -> dict[int, float]:
             )
             if odds_el:
                 try:
-                    result[horse_no] = float(odds_el.get_text(strip=True).replace(",", ""))
+                    txt = odds_el.get_text(strip=True).replace(",", "")
+                    result[horse_no] = float(txt)
                 except ValueError:
                     pass
 
@@ -206,7 +206,9 @@ def _fetch_confirmed_win_odds(netkeiba_race_id: str) -> dict[int, float]:
         return result
 
     except Exception as exc:
-        logger.warning("Failed to fetch confirmed odds for %s: %s", netkeiba_race_id, exc)
+        logger.warning(
+            "Failed to fetch confirmed odds for %s: %s", netkeiba_race_id, exc
+        )
         return {}
 
 
