@@ -1,7 +1,7 @@
 import logging
 import os
 
-from supabase import create_client, Client
+from supabase import Client, create_client
 
 logger = logging.getLogger(__name__)
 
