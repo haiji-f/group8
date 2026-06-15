@@ -51,18 +51,22 @@ def fetch_trifecta_odds(race_id: str, netkeiba_race_id: str) -> list[dict]:
     result: list[dict] = []
     for (h1, h2, h3), odds_value in raw.items():
         for r1, r2, r3 in itertools.permutations([h1, h2, h3]):
-            result.append({
-                "race_id": race_id,
-                "rank1": r1,
-                "rank2": r2,
-                "rank3": r3,
-                "odds_value": odds_value,
-                "scraped_at": scraped_at,
-            })
+            result.append(
+                {
+                    "race_id": race_id,
+                    "rank1": r1,
+                    "rank2": r2,
+                    "rank3": r3,
+                    "odds_value": odds_value,
+                    "scraped_at": scraped_at,
+                }
+            )
 
     logger.info(
         "Trifecta odds for %s: %d triplets → %d permutations",
-        race_id, len(raw), len(result),
+        race_id,
+        len(raw),
+        len(result),
     )
     time.sleep(1.5)
     return result
