@@ -281,8 +281,8 @@ const MOCK_HORSES: Record<string, Horse[]> = {
   ],
 };
 
-// Hardcoded sample trifecta odds for seed match
-const MOCK_TRIFECTA_ODDS: Record<string, number> = {
+// Hardcoded sample trio odds for seed match
+const MOCK_TRIO_ODDS: Record<string, number> = {
   "2026_001_1_2_3": 42.5,
   "2026_001_1_2_6": 38.2,
   "2026_001_1_6_2": 49.0,
@@ -333,12 +333,14 @@ export async function getHorses(raceId: string): Promise<Horse[]> {
   return MOCK_HORSES[raceId] || [];
 }
 
-export async function getTrifectaOdds(
+export async function getTrioOdds(
   raceId: string,
   rank1: number,
   rank2: number,
   rank3: number,
 ): Promise<number> {
+  const [combo1, combo2, combo3] = [rank1, rank2, rank3].sort((a, b) => a - b);
+
   // If supabase is active, query DB
   if (supabase) {
     try {
@@ -346,37 +348,37 @@ export async function getTrifectaOdds(
         .from("trifecta_odds")
         .select("odds")
         .eq("race_id", raceId)
-        .eq("rank1", rank1)
-        .eq("rank2", rank2)
-        .eq("rank3", rank3)
+        .eq("rank1", combo1)
+        .eq("rank2", combo2)
+        .eq("rank3", combo3)
         .single();
 
       if (!error && data) {
         return Number(data.odds);
       }
     } catch (e) {
-      console.error("Supabase trifecta odds lookup failed, calculating fallback:", e);
+      console.error("Supabase trio odds lookup failed, calculating fallback:", e);
     }
   }
 
   // Look in mock dictionary first
-  const key = `${raceId}_${rank1}_${rank2}_${rank3}`;
-  if (MOCK_TRIFECTA_ODDS[key]) {
-    return MOCK_TRIFECTA_ODDS[key];
+  const key = `${raceId}_${combo1}_${combo2}_${combo3}`;
+  if (MOCK_TRIO_ODDS[key]) {
+    return MOCK_TRIO_ODDS[key];
   }
 
   // Dynamically calculate a realistic payout if not pre-seeded
   // Get the horses' single win odds
   const horses = MOCK_HORSES[raceId] || [];
-  const h1 = horses.find((h) => h.horse_no === rank1);
-  const h2 = horses.find((h) => h.horse_no === rank2);
-  const h3 = horses.find((h) => h.horse_no === rank3);
+  const h1 = horses.find((h) => h.horse_no === combo1);
+  const h2 = horses.find((h) => h.horse_no === combo2);
+  const h3 = horses.find((h) => h.horse_no === combo3);
 
   const win1 = h1 ? h1.odds_win : 5.0;
   const win2 = h2 ? h2.odds_win : 8.0;
   const win3 = h3 ? h3.odds_win : 12.0;
 
-  // Trifecta formula that scales with horse odds:
+  // Trio formula that scales with horse odds:
   // e.g. popular horses (low odds) -> low payout, longshots (high odds) -> massive payout!
   // formula: odds = win1 * (win2 + 1.5) * (win3 + 3.0) * coefficient
   // We use 0.7 as coefficient to reflect standard pari-mutuel takeout rates.

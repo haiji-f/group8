@@ -1,7 +1,7 @@
 .simulation-container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 10px;
   width: 100%;
   animation: fadeIn 0.4s ease-out;
 }
@@ -10,14 +10,14 @@
   text-align: left;
   border-left: 4px solid var(--accent);
   padding-left: 16px;
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 
 .race-sim-title {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 800;
   color: #ffffff;
-  margin: 0 0 6px 0;
+  margin: 0 0 4px 0;
 }
 
 .sim-intro-text {
@@ -37,7 +37,7 @@
 .arena-panel {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   align-items: center;
   width: 560px;
 }
@@ -49,7 +49,7 @@
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
   width: 560px;
-  height: 700px;
+  height: 560px;
 }
 
 .physics-canvas {
@@ -63,9 +63,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 10px;
   width: 100%;
-  padding: 10px;
+  padding: 7px;
   background: rgba(18, 18, 20, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.04);
   border-radius: 12px;
@@ -84,9 +85,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px !important;
-  width: 38px;
-  height: 38px;
+  padding: 9px !important;
+  width: 36px;
+  height: 36px;
 }
 
 /* Bottom horse badges section */
@@ -95,7 +96,7 @@
   background: rgba(18, 18, 20, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.03);
   border-radius: 12px;
-  padding: 12px;
+  padding: 8px;
   box-sizing: border-box;
 }
 
@@ -110,8 +111,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.01);
@@ -133,7 +134,7 @@
 
 /* Sidebar Leaderboard */
 .sidebar-panel {
-  height: 832px; /* aligns perfectly with canvas + controls + badges height */
+  height: 622px; /* aligns with taller canvas + badges height */
 }
 
 @keyframes fadeIn {
@@ -161,6 +162,6 @@
     width: 100%;
     max-width: 560px;
     height: auto;
-    aspect-ratio: 560/700;
+    aspect-ratio: 560/560;
   }
 }
