@@ -241,7 +241,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({ race, horses, ranking,
                 {rank1Horse?.horse_no}
               </span>
               <span className="horse-name-cell">{rank1Horse?.horse_name}</span>
-              <span className="odds-cell">{rank1Horse?.odds_win.toFixed(1)}倍</span>
+              <span className="odds-cell">{rank1Horse?.odds_win?.toFixed(1) ?? "0.0"}倍</span>
             </div>
             <div className="standings-row">
               <span className="rank-num text-silver">2着</span>
@@ -252,7 +252,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({ race, horses, ranking,
                 {rank2Horse?.horse_no}
               </span>
               <span className="horse-name-cell">{rank2Horse?.horse_name}</span>
-              <span className="odds-cell">{rank2Horse?.odds_win.toFixed(1)}倍</span>
+              <span className="odds-cell">{rank2Horse?.odds_win?.toFixed(1) ?? "0.0"}倍</span>
             </div>
             <div className="standings-row">
               <span className="rank-num text-bronze">3着</span>
@@ -263,7 +263,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({ race, horses, ranking,
                 {rank3Horse?.horse_no}
               </span>
               <span className="horse-name-cell">{rank3Horse?.horse_name}</span>
-              <span className="odds-cell">{rank3Horse?.odds_win.toFixed(1)}倍</span>
+              <span className="odds-cell">{rank3Horse?.odds_win?.toFixed(1) ?? "0.0"}倍</span>
             </div>
           </div>
         </div>
