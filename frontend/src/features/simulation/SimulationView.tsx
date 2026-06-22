@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useState } from "react";
+import { FastForward, Pause, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import Matter from "matter-js";
+import React, { useEffect, useRef, useState } from "react";
+import Button from "../../components/Button";
 import type { Horse, Race } from "../../types";
 import { getGateColor } from "../../utils/colors";
 import sound from "../../utils/sound";
 import LiveLeaderboard from "./LiveLeaderboard";
-import Button from "../../components/Button";
-import { Play, Pause, FastForward, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import "./SimulationView.css";
 
 interface SimulationViewProps {
@@ -33,22 +33,27 @@ interface BallBody extends Matter.Body {
 
 export const SimulationView: React.FC<SimulationViewProps> = ({ horses, onFinish }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const getInitialBallCounts = () => {
+    const initialCounts: Record<number, number> = {};
+    horses.forEach((h) => {
+      initialCounts[h.horse_no] = h.ball_count;
+    });
+    return initialCounts;
+  };
 
   // Simulation Controls State
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [speedMultiplier, setSpeedMultiplier] = useState<number>(1);
   const [isMuted, setIsMuted] = useState<boolean>(sound.getMutedState());
   const [isGateOpened, setIsGateOpened] = useState<boolean>(false);
+  const [isBallDropComplete, setIsBallDropComplete] = useState<boolean>(false);
+  const [isResultReady, setIsResultReady] = useState<boolean>(false);
+  const [simulationRunId, setSimulationRunId] = useState<number>(0);
 
   // Real-time Standings State
   const [ranking, setRanking] = useState<number[]>([]);
-  const [activeBallCounts, setActiveBallCounts] = useState<Record<number, number>>(() => {
-    const initialCounts: Record<number, number> = {};
-    horses.forEach((h) => {
-      initialCounts[h.horse_no] = h.ball_count;
-    });
-    return initialCounts;
-  });
+  const [activeBallCounts, setActiveBallCounts] =
+    useState<Record<number, number>>(getInitialBallCounts);
 
   // Refs to share mutable variables with the physics engine and animation loop
   const engineRef = useRef<Matter.Engine | null>(null);
@@ -89,20 +94,38 @@ export const SimulationView: React.FC<SimulationViewProps> = ({ horses, onFinish
     setIsMuted(muted);
   };
 
-  // Trigger Restart
-  const handleRestart = () => {
+  // Reset the current simulation back to the closed-gate state.
+  const handleResetSimulation = () => {
     sound.playClick();
-    window.location.reload();
+    rankingRef.current = [];
+    particlesRef.current = [];
+    isPlayingRef.current = true;
+    speedRef.current = 1;
+    partitionRef.current = null;
+    setRanking([]);
+    setActiveBallCounts(getInitialBallCounts());
+    setIsGateOpened(false);
+    setIsBallDropComplete(false);
+    setIsResultReady(false);
+    setIsPlaying(true);
+    setSpeedMultiplier(1);
+    setSimulationRunId((current) => current + 1);
   };
 
   // Handle Gate Release (Open Gate)
   const handleOpenGate = () => {
-    if (isGateOpened) return;
+    if (isGateOpened || !isBallDropComplete) return;
     sound.playClick();
     setIsGateOpened(true);
     if (partitionRef.current && worldRef.current) {
       Matter.Composite.remove(worldRef.current, partitionRef.current);
     }
+  };
+
+  const handleViewResults = () => {
+    if (!isResultReady || rankingRef.current.length < 3) return;
+    sound.playClick();
+    onFinish([...rankingRef.current]);
   };
 
   useEffect(() => {
@@ -111,9 +134,11 @@ export const SimulationView: React.FC<SimulationViewProps> = ({ horses, onFinish
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    setIsBallDropComplete(false);
+    setIsResultReady(false);
 
     const width = 560;
-    const height = 700;
+    const height = 560;
 
     // 1. Create Matter.js Engine & World
     const engine = Matter.Engine.create({
@@ -125,49 +150,139 @@ export const SimulationView: React.FC<SimulationViewProps> = ({ horses, onFinish
 
     // Keep track of peg hits to draw temporary glow flashes
     const pegHitsMap: Record<string, number> = {};
+    const scheduledTimeouts: number[] = [];
+    let isDisposed = false;
+    let isRaceFinished = false;
 
-    // 2. Build Barriers & Triangular Chute Funnel
+    const scheduleTimeout = (callback: () => void, delay: number) => {
+      const timeoutId = window.setTimeout(() => {
+        if (isDisposed) return;
+        callback();
+      }, delay);
+      scheduledTimeouts.push(timeoutId);
+    };
+
+    // 2. Build barriers for the compact single-queue stage.
     const wallOptions = { isStatic: true, restitution: 0.8, friction: 0.01 };
 
-    // Left Hopper Wall
-    const leftHopper = Matter.Bodies.rectangle(240, 95, 8, 90, wallOptions);
-    // Right Hopper Wall
-    const rightHopper = Matter.Bodies.rectangle(320, 95, 8, 90, wallOptions);
+    const stage = {
+      queueX: 20,
+      queueWidth: 520,
+      queueY: 58,
+      queueHeight: 76,
+      trapTopY: 172,
+      trapBottomY: 440,
+      trapTopLeftX: 20,
+      trapTopRightX: 540,
+      trapBottomLeftX: 125,
+      trapBottomRightX: 435,
+      goalX: 90,
+      goalY: 486,
+      goalWidth: 380,
+      goalHeight: 48,
+    };
+    const gateY = stage.queueY + stage.queueHeight;
+    const dropSpawnTopY = 24;
 
-    // Left Sloped Chute Wall (runs from (240, 140) to (80, 550))
-    const leftWall = Matter.Bodies.rectangle(160, 345, 440, 8, {
-      isStatic: true,
-      angle: Math.atan2(410, -160),
-      restitution: 0.85,
-      friction: 0.01,
-      label: "left_sloped_wall",
+    const createWallFromLine = (
+      x1: number,
+      y1: number,
+      x2: number,
+      y2: number,
+      thickness: number,
+      label: string,
+    ) => {
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const length = Math.sqrt(dx * dx + dy * dy);
+      return Matter.Bodies.rectangle((x1 + x2) / 2, (y1 + y2) / 2, length, thickness, {
+        ...wallOptions,
+        angle: Math.atan2(dy, dx),
+        label,
+      });
+    };
+
+    const queueWallTopY = 0;
+    const queueWallHeight = gateY - queueWallTopY;
+    const queueWallY = queueWallTopY + queueWallHeight / 2;
+
+    const queueLeftWall = Matter.Bodies.rectangle(stage.queueX, queueWallY, 8, queueWallHeight, {
+      ...wallOptions,
+      label: "queue_left_wall",
     });
 
-    // Right Sloped Chute Wall (runs from (320, 140) to (480, 550))
-    const rightWall = Matter.Bodies.rectangle(400, 345, 440, 8, {
-      isStatic: true,
-      angle: Math.atan2(410, 160),
-      restitution: 0.85,
-      friction: 0.01,
-      label: "right_sloped_wall",
-    });
+    const queueRightWall = Matter.Bodies.rectangle(
+      stage.queueX + stage.queueWidth,
+      queueWallY,
+      8,
+      queueWallHeight,
+      {
+        ...wallOptions,
+        label: "queue_right_wall",
+      },
+    );
 
-    // Bottom sloped floor to guide balls rightwards (runs from (80, 550) to (400, 640))
-    const bottomFloor = Matter.Bodies.rectangle(240, 595, 332, 8, {
-      isStatic: true,
-      angle: Math.atan2(90, 320),
-      restitution: 0.7,
-      friction: 0.005,
-      label: "bottom_sloped_floor",
-    });
+    const leftGuideWall = createWallFromLine(
+      stage.queueX,
+      gateY + 8,
+      stage.trapTopLeftX,
+      stage.trapTopY,
+      8,
+      "left_guide_wall",
+    );
 
-    // Pocket left wall
-    const leftPocketWall = Matter.Bodies.rectangle(400, 650, 8, 60, wallOptions);
-    // Pocket right vertical wall (runs from (480, 550) down to (480, 680))
-    const rightPocketWall = Matter.Bodies.rectangle(480, 615, 8, 130, wallOptions);
+    const rightGuideWall = createWallFromLine(
+      stage.queueX + stage.queueWidth,
+      gateY + 8,
+      stage.trapTopRightX,
+      stage.trapTopY,
+      8,
+      "right_guide_wall",
+    );
 
-    // Horizontal Partition Gate (holds balls in hopper initially)
-    const partition = Matter.Bodies.rectangle(280, 140, 80, 8, {
+    const leftWall = createWallFromLine(
+      stage.trapTopLeftX,
+      stage.trapTopY,
+      stage.trapBottomLeftX,
+      stage.trapBottomY,
+      8,
+      "left_stage_wall",
+    );
+
+    const rightWall = createWallFromLine(
+      stage.trapTopRightX,
+      stage.trapTopY,
+      stage.trapBottomRightX,
+      stage.trapBottomY,
+      8,
+      "right_stage_wall",
+    );
+
+    const goalLeftWall = Matter.Bodies.rectangle(
+      stage.goalX,
+      stage.goalY + stage.goalHeight / 2,
+      8,
+      stage.goalHeight,
+      { ...wallOptions, label: "goal_left_wall" },
+    );
+
+    const goalRightWall = Matter.Bodies.rectangle(
+      stage.goalX + stage.goalWidth,
+      stage.goalY + stage.goalHeight / 2,
+      8,
+      stage.goalHeight,
+      { ...wallOptions, label: "goal_right_wall" },
+    );
+
+    const goalBottomFloor = Matter.Bodies.rectangle(
+      stage.goalX + stage.goalWidth / 2,
+      stage.goalY + stage.goalHeight,
+      stage.goalWidth,
+      8,
+      { ...wallOptions, label: "goal_bottom_floor" },
+    );
+
+    const partition = Matter.Bodies.rectangle(280, gateY, stage.queueWidth, 8, {
       isStatic: true,
       label: "partition",
     });
@@ -175,52 +290,77 @@ export const SimulationView: React.FC<SimulationViewProps> = ({ horses, onFinish
 
     // Add static boundaries to world
     const boundaries = [
-      leftHopper,
-      rightHopper,
+      queueLeftWall,
+      queueRightWall,
+      leftGuideWall,
+      rightGuideWall,
       leftWall,
       rightWall,
-      bottomFloor,
-      leftPocketWall,
-      rightPocketWall,
+      goalLeftWall,
+      goalRightWall,
+      goalBottomFloor,
       partition,
     ];
     Matter.Composite.add(world, boundaries);
 
-    // 3. Setup Pegs inside the sloped triangle bounds
+    // 3. Setup pegs inside the inverted triangle bounds
     const pegs: Matter.Body[] = [];
     const pegOptions = { isStatic: true, restitution: 0.9, friction: 0 };
-    const startY = 170;
-    const endY = 530;
-    const rowSpacing = 32;
-    const colSpacing = 30;
+    const pegRadius = 3.8;
+    const pegKeys = new Set<string>();
+    const startY = 206;
+    const endY = 438;
+    const rowSpacing = 22;
+    const colSpacing = 29;
+
+    const addPeg = (x: number, y: number) => {
+      const key = `${Math.round(x)}_${Math.round(y)}`;
+      if (pegKeys.has(key)) return;
+
+      const peg = Matter.Bodies.circle(x, y, pegRadius, pegOptions);
+      peg.label = `peg_${key}`;
+      pegs.push(peg);
+      pegKeys.add(key);
+    };
 
     let rowIndex = 0;
     for (let y = startY; y <= endY; y += rowSpacing) {
-      // Linearly interpolate left and right wall coordinates at current y
-      const leftX = 240 - (y - 140) * (160 / 410);
-      const rightX = 320 + (y - 140) * (160 / 410);
+      const progress = (y - stage.trapTopY) / (stage.trapBottomY - stage.trapTopY);
+      const leftX = stage.trapTopLeftX + (stage.trapBottomLeftX - stage.trapTopLeftX) * progress;
+      const rightX =
+        stage.trapTopRightX + (stage.trapBottomRightX - stage.trapTopRightX) * progress;
 
-      const isOffset = rowIndex % 2 === 1;
-      const startX = leftX + (isOffset ? colSpacing / 2 : 0);
+      const leftLimit = leftX + 12;
+      const rightLimit = rightX - 12;
+      const zigzagOffset = rowIndex % 2 === 0 ? 0 : colSpacing / 2;
+      const centerPegX = width / 2 + zigzagOffset;
 
-      for (let x = startX; x <= rightX; x += colSpacing) {
-        // Place pegs safely within boundaries (give 18px clearance from walls)
-        if (x < leftX + 18 || x > rightX - 18) continue;
+      addPeg(leftX + 8, y);
+      addPeg(rightX - 8, y);
 
-        const peg = Matter.Bodies.circle(x, y, 4, pegOptions);
-        peg.label = `peg_${x}_${y}`;
-        pegs.push(peg);
+      for (let x = centerPegX; x <= rightLimit; x += colSpacing) {
+        addPeg(x, y);
+      }
+
+      for (let x = centerPegX - colSpacing; x >= leftLimit; x -= colSpacing) {
+        addPeg(x, y);
       }
       rowIndex++;
     }
     Matter.Composite.add(world, pegs);
 
-    // 4. Goal Line Sensor inside bottom right pocket
-    const goalSensor = Matter.Bodies.rectangle(440, 670, 72, 8, {
-      isStatic: true,
-      isSensor: true,
-      label: "goal_sensor",
-    });
+    // 4. Goal line sensor across the goal area
+    const goalSensor = Matter.Bodies.rectangle(
+      stage.goalX + stage.goalWidth / 2,
+      stage.goalY + 8,
+      stage.goalWidth,
+      8,
+      {
+        isStatic: true,
+        isSensor: true,
+        label: "goal_sensor",
+      },
+    );
     Matter.Composite.add(world, goalSensor);
 
     // 5. Spawn Weighted Balls Staggered in top hopper
@@ -239,14 +379,24 @@ export const SimulationView: React.FC<SimulationViewProps> = ({ horses, onFinish
     }
 
     const dropBall = (def: { horseNo: number; postNo: number }, idx: number) => {
+      if (isDisposed || isRaceFinished) return;
       if (!isPlayingRef.current) {
-        setTimeout(() => dropBall(def, idx), 100);
+        scheduleTimeout(() => dropBall(def, idx), 100);
         return;
       }
 
-      // Random position inside the hopper bounds (x = 245..315, y = 50..130)
-      const spawnX = 245 + Math.random() * 70;
-      const spawnY = 50 + Math.random() * 80;
+      const spawnMargin = 26;
+      const spawnLaneCount = Math.max(
+        1,
+        Math.floor((stage.queueWidth - spawnMargin * 2) / (8.5 * 2.4)),
+      );
+      const spawnLaneStep =
+        spawnLaneCount === 1 ? 0 : (stage.queueWidth - spawnMargin * 2) / (spawnLaneCount - 1);
+      const spawnLaneIndex = idx % spawnLaneCount;
+      const spawnWaveIndex = Math.floor(idx / spawnLaneCount);
+      const spawnX =
+        stage.queueX + spawnMargin + spawnLaneIndex * spawnLaneStep + (Math.random() - 0.5) * 3;
+      const spawnY = dropSpawnTopY - (spawnWaveIndex % 4) * 18;
 
       const ball = Matter.Bodies.circle(spawnX, spawnY, 8.5, {
         restitution: 0.45,
@@ -260,24 +410,32 @@ export const SimulationView: React.FC<SimulationViewProps> = ({ horses, onFinish
       (ball as BallBody).postNo = def.postNo;
 
       Matter.Body.setVelocity(ball, {
-        x: (Math.random() - 0.5) * 1.5,
-        y: Math.random() * 0.5,
+        x: (Math.random() - 0.5) * 0.6,
+        y: 1 + Math.random() * 0.4,
       });
 
       ballsList.push(ball);
       Matter.Composite.add(world, ball);
+
+      if (idx === ballDefinitions.length - 1) {
+        setIsBallDropComplete(true);
+      }
 
       if (idx % 12 === 0) {
         sound.playBounce(0.3);
       }
     };
 
-    // Stagger ball releases in top hopper
-    ballDefinitions.forEach((def, i) => {
-      setTimeout(() => {
-        dropBall(def, i);
-      }, i * 35);
-    });
+    // Stagger ball releases above the waiting zone.
+    if (ballDefinitions.length === 0) {
+      scheduleTimeout(() => setIsBallDropComplete(true), 0);
+    } else {
+      ballDefinitions.forEach((def, i) => {
+        scheduleTimeout(() => {
+          dropBall(def, i);
+        }, i * 35);
+      });
+    }
 
     // 6. Handle Collisions
     Matter.Events.on(engine, "collisionStart", (event) => {
@@ -347,12 +505,11 @@ export const SimulationView: React.FC<SimulationViewProps> = ({ horses, onFinish
               });
 
               if (newRank.length === 3) {
+                isRaceFinished = true;
                 isPlayingRef.current = false;
                 setIsPlaying(false);
+                setIsResultReady(true);
                 sound.playFanfare();
-                setTimeout(() => {
-                  onFinish(newRank);
-                }, 2200);
               }
             } else {
               Matter.Composite.remove(world, checkBall);
@@ -410,6 +567,100 @@ export const SimulationView: React.FC<SimulationViewProps> = ({ horses, onFinish
       });
     };
 
+    const drawRoundedBox = (
+      x: number,
+      y: number,
+      boxWidth: number,
+      boxHeight: number,
+      radius: number,
+      fillStyle: string,
+      strokeStyle: string,
+      lineWidth = 1.5,
+    ) => {
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(x, y, boxWidth, boxHeight, radius);
+      ctx.fillStyle = fillStyle;
+      ctx.fill();
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = lineWidth;
+      ctx.stroke();
+      ctx.restore();
+    };
+
+    const drawStageLabel = (text: string, x: number, y: number, size = 12) => {
+      ctx.save();
+      ctx.fillStyle = "rgba(255,255,255,0.68)";
+      ctx.font = `bold ${size}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, x, y);
+      ctx.restore();
+    };
+
+    const drawStageShell = () => {
+      drawStageLabel("待機ゾーン", 280, 24, 13);
+
+      drawRoundedBox(
+        stage.queueX,
+        stage.queueY,
+        stage.queueWidth,
+        stage.queueHeight,
+        8,
+        "rgba(245,245,245,0.06)",
+        "rgba(255,255,255,0.22)",
+      );
+
+      drawStageLabel("ゲート", 280, gateY + 20, 11);
+      if (world.bodies.includes(partition)) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(stage.queueX, gateY);
+        ctx.lineTo(stage.queueX + stage.queueWidth, gateY);
+        ctx.strokeStyle = "rgba(204,164,82,0.22)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+
+        drawRoundedBox(
+          stage.queueX,
+          gateY - 5,
+          stage.queueWidth,
+          10,
+          5,
+          "rgba(204,164,82,0.95)",
+          "rgba(255,255,255,0.34)",
+          1,
+        );
+      }
+
+      drawStageLabel("ピンゾーン", 280, stage.trapTopY + 16, 12);
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(stage.trapTopLeftX, stage.trapTopY);
+      ctx.lineTo(stage.trapTopRightX, stage.trapTopY);
+      ctx.lineTo(stage.trapBottomRightX, stage.trapBottomY);
+      ctx.lineTo(stage.trapBottomLeftX, stage.trapBottomY);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(255,255,255,0.045)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+
+      drawStageLabel("ゴール", 280, stage.goalY - 16, 12);
+      drawRoundedBox(
+        stage.goalX,
+        stage.goalY,
+        stage.goalWidth,
+        stage.goalHeight,
+        3,
+        "rgba(255,255,255,0.03)",
+        "rgba(204,164,82,0.55)",
+      );
+    };
+
     // 8. Custom Render Loop
     const draw = () => {
       if (isPlayingRef.current) {
@@ -439,14 +690,15 @@ export const SimulationView: React.FC<SimulationViewProps> = ({ horses, onFinish
         ctx.stroke();
       }
 
+      drawStageShell();
+
       // Draw barriers
       ctx.fillStyle = "rgba(18, 18, 20, 0.6)";
       ctx.strokeStyle = "rgba(255, 255, 255, 0.06)";
       ctx.lineWidth = 1.5;
 
       boundaries.forEach((body) => {
-        // Skip drawing the partition if it has been removed
-        if (body.label === "partition" && !world.bodies.includes(body)) return;
+        if (body.label === "partition") return;
 
         ctx.beginPath();
         const vertices = body.vertices;
@@ -463,7 +715,7 @@ export const SimulationView: React.FC<SimulationViewProps> = ({ horses, onFinish
       pegs.forEach((peg) => {
         const glowOpacity = pegHitsMap[peg.label] || 0;
         ctx.beginPath();
-        ctx.arc(peg.position.x, peg.position.y, 3.5, 0, Math.PI * 2);
+        ctx.arc(peg.position.x, peg.position.y, pegRadius, 0, Math.PI * 2);
 
         if (glowOpacity > 0) {
           ctx.fillStyle = `rgba(255, 255, 255, ${0.4 + glowOpacity * 0.6})`;
@@ -479,19 +731,10 @@ export const SimulationView: React.FC<SimulationViewProps> = ({ horses, onFinish
         ctx.shadowBlur = 0;
       });
 
-      // Goal Pocket Label text
-      ctx.save();
-      ctx.fillStyle = "rgba(204, 164, 82, 0.7)";
-      ctx.font = "bold 11px sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("ゴールポケット", 440, 662);
-      ctx.restore();
-
-      // Goal Laser Sensor
       ctx.save();
       ctx.beginPath();
-      ctx.moveTo(405, 670);
-      ctx.lineTo(475, 670);
+      ctx.moveTo(stage.goalX + 8, stage.goalY + 8);
+      ctx.lineTo(stage.goalX + stage.goalWidth - 8, stage.goalY + 8);
       ctx.lineWidth = 3;
       ctx.strokeStyle = "rgba(204, 164, 82, 0.85)";
       ctx.shadowBlur = 8;
@@ -544,20 +787,59 @@ export const SimulationView: React.FC<SimulationViewProps> = ({ horses, onFinish
     draw();
 
     return () => {
+      isDisposed = true;
+      scheduledTimeouts.forEach((timeoutId) => {
+        window.clearTimeout(timeoutId);
+      });
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
       Matter.World.clear(world, false);
       Matter.Engine.clear(engine);
     };
-  }, [horses, onFinish]);
+  }, [horses, simulationRunId]);
+
+  const simulationControls = (
+    <div className="controls-bar">
+      <Button variant="secondary" size="md" onClick={handleTogglePlay} className="control-btn">
+        {isPlaying ? (
+          <>
+            <Pause size={16} /> 一時停止
+          </>
+        ) : (
+          <>
+            <Play size={16} /> 再生
+          </>
+        )}
+      </Button>
+
+      <Button variant="secondary" size="md" onClick={handleCycleSpeed} className="control-btn">
+        <FastForward size={16} /> 倍速: {speedMultiplier}x
+      </Button>
+
+      <Button variant="secondary" size="md" onClick={handleToggleMute} className="control-btn-icon">
+        {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+      </Button>
+
+      <Button
+        variant="secondary"
+        size="md"
+        onClick={handleResetSimulation}
+        className="control-btn-icon"
+        aria-label="ゲートを開ける前に戻す"
+        title="ゲートを開ける前に戻す"
+      >
+        <RotateCcw size={16} />
+      </Button>
+    </div>
+  );
 
   return (
     <div className="simulation-container">
       <div className="simulation-header">
         <h2 className="race-sim-title">ボール落下抽選</h2>
         <p className="sim-intro-text">
-          小さなボールが静かに落ちて、先に入った順で着順が決まります。
+          小さなボールが静かに落ちて、入った3頭で三連複の組み合わせが決まります。
         </p>
       </div>
 
@@ -565,54 +847,7 @@ export const SimulationView: React.FC<SimulationViewProps> = ({ horses, onFinish
         {/* Left Column: Physics Chute Board */}
         <div className="arena-panel">
           <div className="canvas-wrapper">
-            <canvas ref={canvasRef} width={560} height={700} className="physics-canvas" />
-          </div>
-
-          {/* Controls Bar */}
-          <div className="controls-bar">
-            <Button
-              variant="secondary"
-              size="md"
-              onClick={handleTogglePlay}
-              className="control-btn"
-            >
-              {isPlaying ? (
-                <>
-                  <Pause size={16} /> 一時停止
-                </>
-              ) : (
-                <>
-                  <Play size={16} /> 再生
-                </>
-              )}
-            </Button>
-
-            <Button
-              variant="secondary"
-              size="md"
-              onClick={handleCycleSpeed}
-              className="control-btn"
-            >
-              <FastForward size={16} /> 倍速: {speedMultiplier}x
-            </Button>
-
-            <Button
-              variant="secondary"
-              size="md"
-              onClick={handleToggleMute}
-              className="control-btn-icon"
-            >
-              {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-            </Button>
-
-            <Button
-              variant="secondary"
-              size="md"
-              onClick={handleRestart}
-              className="control-btn-icon"
-            >
-              <RotateCcw size={16} />
-            </Button>
+            <canvas ref={canvasRef} width={560} height={560} className="physics-canvas" />
           </div>
 
           {/* Bottom Horse Badge List */}
@@ -653,7 +888,11 @@ export const SimulationView: React.FC<SimulationViewProps> = ({ horses, onFinish
             horses={horses}
             ranking={ranking}
             isGateOpened={isGateOpened}
+            isBallDropComplete={isBallDropComplete}
+            isResultReady={isResultReady}
+            controls={simulationControls}
             onOpenGate={handleOpenGate}
+            onViewResults={handleViewResults}
           />
         </div>
       </div>

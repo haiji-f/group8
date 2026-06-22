@@ -112,7 +112,7 @@ export const RaceSelectionView: React.FC<RaceSelectionViewProps> = ({ onSelectRa
                   <div className="ready-badge">抽選準備OK</div>
 
                   <p className="description-text">
-                    このレースでボールを落として、先に入った順で3連単を決めます。
+                    このレースでボールを落として、入った3頭で3連複を決めます。
                   </p>
 
                   {/* Ball previews */}

@@ -1,5 +1,24 @@
+import type { Horse, Race } from "../types";
 import { supabase } from "./supabase";
-import type { Race, Horse } from "../types";
+
+interface DBRace {
+  race_id: string;
+  race_name: string;
+  venue: string;
+  post_time: string | null;
+  num_horses: number;
+  distance: number;
+  surface: string;
+}
+
+interface DBHorse {
+  horse_no: number;
+  post_no: number;
+  horse_name: string;
+  ball_count: number | null;
+  jockey: string | null;
+  win_odds: number | string | null;
+}
 
 // Mock Data matching the seed SQL exactly
 const MOCK_RACES: Race[] = [
@@ -281,8 +300,8 @@ const MOCK_HORSES: Record<string, Horse[]> = {
   ],
 };
 
-// Hardcoded sample trifecta odds for seed match
-const MOCK_TRIFECTA_ODDS: Record<string, number> = {
+// Hardcoded sample trio odds for seed match
+const MOCK_TRIO_ODDS: Record<string, number> = {
   "2026_001_1_2_3": 42.5,
   "2026_001_1_2_6": 38.2,
   "2026_001_1_6_2": 49.0,
@@ -303,7 +322,17 @@ export async function getRaces(): Promise<Race[]> {
         .select("*")
         .order("post_time", { ascending: true });
       if (error) throw error;
-      if (data && data.length > 0) return data as Race[];
+      if (data && data.length > 0) {
+        return (data as DBRace[]).map((r) => ({
+          race_id: r.race_id,
+          race_name: r.race_name,
+          venue: r.venue,
+          post_time: r.post_time ? r.post_time.substring(0, 5) : "",
+          num_horses: r.num_horses,
+          distance: r.distance,
+          track_type: r.surface === "芝" ? "Turf" : "Dirt",
+        }));
+      }
     } catch (e) {
       console.error("Failed to fetch races from Supabase, falling back to Mock:", e);
     }
@@ -323,7 +352,16 @@ export async function getHorses(raceId: string): Promise<Horse[]> {
         .eq("race_id", raceId)
         .order("horse_no", { ascending: true });
       if (error) throw error;
-      if (data && data.length > 0) return data as Horse[];
+      if (data && data.length > 0) {
+        return (data as DBHorse[]).map((h) => ({
+          horse_no: h.horse_no,
+          post_no: h.post_no,
+          horse_name: h.horse_name,
+          ball_count: h.ball_count || 5,
+          jockey_name: h.jockey || "",
+          odds_win: Number(h.win_odds || 0),
+        }));
+      }
     } catch (e) {
       console.error(`Failed to fetch horses for ${raceId} from Supabase, falling back to Mock:`, e);
     }
@@ -333,41 +371,49 @@ export async function getHorses(raceId: string): Promise<Horse[]> {
   return MOCK_HORSES[raceId] || [];
 }
 
-export async function getTrifectaOdds(
+export async function getTrioOdds(
   raceId: string,
   rank1: number,
   rank2: number,
   rank3: number,
 ): Promise<number> {
+  const [combo1, combo2, combo3] = [rank1, rank2, rank3].sort((a, b) => a - b);
+
   // If supabase is active, query DB
   if (supabase) {
     try {
       const { data, error } = await supabase
         .from("trifecta_odds")
-        .select("odds")
+        .select("odds_value")
         .eq("race_id", raceId)
-        .eq("rank1", rank1)
-        .eq("rank2", rank2)
-        .eq("rank3", rank3)
+        .eq("rank1", combo1)
+        .eq("rank2", combo2)
+        .eq("rank3", combo3)
         .single();
 
       if (!error && data) {
-        return Number(data.odds);
+        return Number(data.odds_value);
       }
     } catch (e) {
-      console.error("Supabase trifecta odds lookup failed, calculating fallback:", e);
+      console.error("Supabase trio odds lookup failed, calculating fallback:", e);
     }
   }
 
   // Look in mock dictionary first
-  const key = `${raceId}_${rank1}_${rank2}_${rank3}`;
-  if (MOCK_TRIFECTA_ODDS[key]) {
-    return MOCK_TRIFECTA_ODDS[key];
+  const key = `${raceId}_${combo1}_${combo2}_${combo3}`;
+  if (MOCK_TRIO_ODDS[key]) {
+    return MOCK_TRIO_ODDS[key];
   }
 
   // Dynamically calculate a realistic payout if not pre-seeded
   // Get the horses' single win odds
-  const horses = MOCK_HORSES[raceId] || [];
+  let horses: Horse[] = [];
+  if (supabase) {
+    horses = await getHorses(raceId);
+  }
+  if (!horses || horses.length === 0) {
+    horses = MOCK_HORSES[raceId] || [];
+  }
   const h1 = horses.find((h) => h.horse_no === rank1);
   const h2 = horses.find((h) => h.horse_no === rank2);
   const h3 = horses.find((h) => h.horse_no === rank3);
@@ -376,7 +422,7 @@ export async function getTrifectaOdds(
   const win2 = h2 ? h2.odds_win : 8.0;
   const win3 = h3 ? h3.odds_win : 12.0;
 
-  // Trifecta formula that scales with horse odds:
+  // Trio formula that scales with horse odds:
   // e.g. popular horses (low odds) -> low payout, longshots (high odds) -> massive payout!
   // formula: odds = win1 * (win2 + 1.5) * (win3 + 3.0) * coefficient
   // We use 0.7 as coefficient to reflect standard pari-mutuel takeout rates.
