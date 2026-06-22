@@ -1,7 +1,7 @@
 import confetti from "canvas-confetti";
-import { ArrowRight, RotateCcw, Trophy } from "lucide-react";
+import { RotateCcw, Trophy } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { getTrifectaOdds } from "../../api/raceService";
+import { getTrioOdds } from "../../api/raceService";
 import Button from "../../components/Button";
 import type { Horse, Race } from "../../types";
 import { getGateColor } from "../../utils/colors";
@@ -54,7 +54,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({ race, horses, ranking,
     async function loadOdds() {
       try {
         setLoading(true);
-        const fetchedOdds = await getTrifectaOdds(race.race_id, ranking[0], ranking[1], ranking[2]);
+        const fetchedOdds = await getTrioOdds(race.race_id, ranking[0], ranking[1], ranking[2]);
 
         // 3. Count up animation
         const duration = 1200; // ms
@@ -101,7 +101,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({ race, horses, ranking,
       </div>
 
       <div className="results-layout">
-        {/* Left Card: 3連単 & Odds Display */}
+        {/* Left Card: 3連複 & Odds Display */}
         <div className="payout-panel">
           <h3 className="panel-section-title">三連複 配当金結果</h3>
 
@@ -113,7 +113,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({ race, horses, ranking,
               return (
                 <React.Fragment key={horseNo}>
                   <div className="ticket-item">
-                    <span className="ticket-rank-label">{index + 1}着</span>
+                    <span className="ticket-rank-label">{index + 1}頭目</span>
                     <div
                       className="ticket-circle"
                       style={{
@@ -126,7 +126,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({ race, horses, ranking,
                     </div>
                     <span className="ticket-name-label">{horse?.horse_name}</span>
                   </div>
-                  {index < 2 && <ArrowRight className="combo-arrow" size={24} />}
+                  {index < 2 && <span className="combo-separator">-</span>}
                 </React.Fragment>
               );
             })}
@@ -165,7 +165,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({ race, horses, ranking,
 
         {/* Right Card: Podium Standings Visual */}
         <div className="podium-panel">
-          <h3 className="panel-section-title">入賞馬表彰台</h3>
+          <h3 className="panel-section-title">選出馬一覧</h3>
 
           <div className="visual-podium">
             {/* 2nd Place */}
@@ -226,14 +226,14 @@ export const ResultsView: React.FC<ResultsViewProps> = ({ race, horses, ranking,
           {/* Full Standings Detail table */}
           <div className="full-standings-list">
             <div className="standings-header">
-              <span>着順</span>
+              <span>確定</span>
               <span>馬番</span>
               <span>馬名</span>
               <span style={{ textAlign: "right" }}>単勝オッズ</span>
             </div>
 
             <div className="standings-row">
-              <span className="rank-num text-gold">1着</span>
+              <span className="rank-num text-gold">1頭目</span>
               <span
                 className="gate-num-cell"
                 style={{ borderLeftColor: getGateColor(rank1Horse?.post_no || 1).bg }}
@@ -244,7 +244,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({ race, horses, ranking,
               <span className="odds-cell">{rank1Horse?.odds_win?.toFixed(1) ?? "0.0"}倍</span>
             </div>
             <div className="standings-row">
-              <span className="rank-num text-silver">2着</span>
+              <span className="rank-num text-silver">2頭目</span>
               <span
                 className="gate-num-cell"
                 style={{ borderLeftColor: getGateColor(rank2Horse?.post_no || 1).bg }}
@@ -255,7 +255,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({ race, horses, ranking,
               <span className="odds-cell">{rank2Horse?.odds_win?.toFixed(1) ?? "0.0"}倍</span>
             </div>
             <div className="standings-row">
-              <span className="rank-num text-bronze">3着</span>
+              <span className="rank-num text-bronze">3頭目</span>
               <span
                 className="gate-num-cell"
                 style={{ borderLeftColor: getGateColor(rank3Horse?.post_no || 1).bg }}

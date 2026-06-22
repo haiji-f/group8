@@ -31,11 +31,11 @@ function App() {
   };
 
   return (
-    <div className="app-container">
+    <div className={`app-container app-step-${step}`}>
       {/* Premium Header */}
       <header className="app-header">
         <div className="header-logo">
-          <span className="logo-text">TRIFECTA DROP</span>
+          <span className="logo-text">TRIO DROP</span>
           <span className="logo-subtext">
             {step === 1 && "1 レース選択"}
             {step === 2 && "2 ボール抽選"}
@@ -70,7 +70,7 @@ function App() {
 
       {/* Premium footer */}
       <footer className="app-footer">
-        <p>© 2026 TrifectaDrop. All Rights Reserved. Powered by Matter.js & React.</p>
+        <p>© 2026 TrioDrop. All Rights Reserved. Powered by Matter.js & React.</p>
       </footer>
     </div>
   );

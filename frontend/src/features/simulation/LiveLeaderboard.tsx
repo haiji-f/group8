@@ -8,14 +8,22 @@ interface LiveLeaderboardProps {
   horses: Horse[];
   ranking: number[]; // e.g. [7]
   isGateOpened: boolean;
+  isBallDropComplete: boolean;
+  isResultReady: boolean;
+  controls?: React.ReactNode;
   onOpenGate: () => void;
+  onViewResults: () => void;
 }
 
 export const LiveLeaderboard: React.FC<LiveLeaderboardProps> = ({
   horses,
   ranking,
   isGateOpened,
+  isBallDropComplete,
+  isResultReady,
+  controls,
   onOpenGate,
+  onViewResults,
 }) => {
   const rank1 = ranking[0];
   const rank2 = ranking[1];
@@ -35,7 +43,7 @@ export const LiveLeaderboard: React.FC<LiveLeaderboardProps> = ({
         <div className={`status-capsule rank-1 ${rank1 ? "confirmed" : "pending"}`}>
           {rank1 ? (
             <div className="capsule-content">
-              <span className="capsule-label">1着</span>
+              <span className="capsule-label">1頭目</span>
               <span
                 className="capsule-gate-circle"
                 style={{
@@ -52,7 +60,7 @@ export const LiveLeaderboard: React.FC<LiveLeaderboardProps> = ({
             </div>
           ) : (
             <div className="capsule-content">
-              <span className="capsule-label">1着</span>
+              <span className="capsule-label">1頭目</span>
               <span className="capsule-status-tag">判定中</span>
             </div>
           )}
@@ -64,7 +72,7 @@ export const LiveLeaderboard: React.FC<LiveLeaderboardProps> = ({
         >
           {rank2 ? (
             <div className="capsule-content">
-              <span className="capsule-label">2着</span>
+              <span className="capsule-label">2頭目</span>
               <span
                 className="capsule-gate-circle"
                 style={{
@@ -81,12 +89,12 @@ export const LiveLeaderboard: React.FC<LiveLeaderboardProps> = ({
             </div>
           ) : rank1 ? (
             <div className="capsule-content">
-              <span className="capsule-label">2着</span>
+              <span className="capsule-label">2頭目</span>
               <span className="capsule-status-tag">判定中</span>
             </div>
           ) : (
             <div className="capsule-content">
-              <span className="capsule-label">2着</span>
+              <span className="capsule-label">2頭目</span>
               <span className="capsule-status-tag text-muted">待機</span>
             </div>
           )}
@@ -98,7 +106,7 @@ export const LiveLeaderboard: React.FC<LiveLeaderboardProps> = ({
         >
           {rank3 ? (
             <div className="capsule-content">
-              <span className="capsule-label">3着</span>
+              <span className="capsule-label">3頭目</span>
               <span
                 className="capsule-gate-circle"
                 style={{
@@ -115,12 +123,12 @@ export const LiveLeaderboard: React.FC<LiveLeaderboardProps> = ({
             </div>
           ) : rank2 ? (
             <div className="capsule-content">
-              <span className="capsule-label">3着</span>
+              <span className="capsule-label">3頭目</span>
               <span className="capsule-status-tag">判定中</span>
             </div>
           ) : (
             <div className="capsule-content">
-              <span className="capsule-label">3着</span>
+              <span className="capsule-label">3頭目</span>
               <span className="capsule-status-tag text-muted">待機</span>
             </div>
           )}
@@ -130,20 +138,32 @@ export const LiveLeaderboard: React.FC<LiveLeaderboardProps> = ({
       {/* Guide Card Box */}
       <div className="simulation-guide-box">
         <h4 className="guide-title">見方</h4>
-        <p className="guide-description">先にポケットへ入った番号から順に確定します。</p>
+        <p className="guide-description">ポケットへ入った3頭で三連複の組み合わせを確定します。</p>
       </div>
 
-      {/* Bottom release CTA button */}
-      <div className="live-action-wrapper">
-        {!isGateOpened ? (
-          <Button variant="primary" size="lg" className="w-full" onClick={onOpenGate}>
-            ゲートを開ける
-          </Button>
-        ) : (
-          <Button variant="secondary" size="lg" className="w-full" disabled>
-            抽選を見守る
-          </Button>
-        )}
+      <div className="live-actions">
+        {controls && <div className="leaderboard-controls-wrapper">{controls}</div>}
+
+        {/* Bottom release CTA button */}
+        <div className="live-action-wrapper">
+          {!isGateOpened && !isBallDropComplete ? (
+            <Button variant="secondary" size="lg" className="w-full" disabled>
+              ボール投入中
+            </Button>
+          ) : !isGateOpened ? (
+            <Button variant="primary" size="lg" className="w-full" onClick={onOpenGate}>
+              ゲートを開ける
+            </Button>
+          ) : isResultReady ? (
+            <Button variant="primary" size="lg" className="w-full" onClick={onViewResults}>
+              結果を見る
+            </Button>
+          ) : (
+            <Button variant="secondary" size="lg" className="w-full" disabled>
+              抽選を見守る
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
