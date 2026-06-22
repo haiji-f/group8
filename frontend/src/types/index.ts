@@ -18,12 +18,12 @@ export interface Horse {
 }
 
 export interface RankingResult {
-  rank1: number; // 1着の horse_no
-  rank2: number; // 2着の horse_no
-  rank3: number; // 3着の horse_no
+  rank1: number; // 1頭目の horse_no
+  rank2: number; // 2頭目の horse_no
+  rank3: number; // 3頭目の horse_no
 }
 
-export interface TrifectaOdds {
+export interface TrioOdds {
   race_id: string;
   rank1: number;
   rank2: number;

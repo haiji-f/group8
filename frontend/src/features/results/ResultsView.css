@@ -121,9 +121,12 @@
   max-width: 90px;
 }
 
-.combo-arrow {
+.combo-separator {
   color: #475569;
   margin-top: 10px;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
 }
 
 /* Odds Stats Box */
