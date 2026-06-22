@@ -1,6 +1,6 @@
+import logging
 import re
 import time
-import logging
 from datetime import UTC, datetime
 
 import requests
@@ -18,15 +18,28 @@ HEADERS = {
 
 # netkeiba 競馬場コード → 英語キー / 日本語名
 _VENUE_EN = {
-    "01": "sapporo", "02": "hakodate", "03": "fukushima",
-    "04": "niigata", "05": "tokyo",    "06": "nakayama",
-    "07": "chukyo",  "08": "kyoto",   "09": "hanshin",
+    "01": "sapporo",
+    "02": "hakodate",
+    "03": "fukushima",
+    "04": "niigata",
+    "05": "tokyo",
+    "06": "nakayama",
+    "07": "chukyo",
+    "08": "kyoto",
+    "09": "hanshin",
     "10": "kokura",
 }
 _VENUE_JP = {
-    "01": "札幌", "02": "函館", "03": "福島", "04": "新潟",
-    "05": "東京", "06": "中山", "07": "中京", "08": "京都",
-    "09": "阪神", "10": "小倉",
+    "01": "札幌",
+    "02": "函館",
+    "03": "福島",
+    "04": "新潟",
+    "05": "東京",
+    "06": "中山",
+    "07": "中京",
+    "08": "京都",
+    "09": "阪神",
+    "10": "小倉",
 }
 
 
@@ -121,14 +134,16 @@ def scrape_race(netkeiba_race_id: str, race_date: str) -> tuple[dict, list[dict]
                         pass
                     break
 
-            horses.append({
-                "race_id": race_id,
-                "horse_no": horse_no,
-                "post_no": post_no,
-                "horse_name": horse_name,
-                "jockey": jockey,
-                "win_odds": win_odds,
-            })
+            horses.append(
+                {
+                    "race_id": race_id,
+                    "horse_no": horse_no,
+                    "post_no": post_no,
+                    "horse_name": horse_name,
+                    "jockey": jockey,
+                    "win_odds": win_odds,
+                }
+            )
 
     scraped_at = datetime.now(UTC).isoformat()
     race = {

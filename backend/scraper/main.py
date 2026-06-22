@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 # 日付計算
 # ---------------------------------------------------------------------------
 
+
 def get_target_dates(args_dates: list[str] | None) -> list[date]:
     if args_dates:
         return [date.fromisoformat(d) for d in args_dates]
@@ -53,6 +54,7 @@ def get_target_dates(args_dates: list[str] | None) -> list[date]:
 # ---------------------------------------------------------------------------
 # メイン処理
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     load_dotenv()
@@ -95,9 +97,7 @@ def main() -> None:
             try:
                 race, horses = scrape_race(netkeiba_race_id, race_date_iso)
             except Exception as exc:
-                logger.error(
-                    "Failed to scrape race %s: %s", netkeiba_race_id, exc
-                )
+                logger.error("Failed to scrape race %s: %s", netkeiba_race_id, exc)
                 total_errors += 1
                 continue
 
