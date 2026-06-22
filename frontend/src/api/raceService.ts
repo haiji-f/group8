@@ -1,6 +1,25 @@
 import { supabase } from "./supabase";
 import type { Race, Horse } from "../types";
 
+interface DBRace {
+  race_id: string;
+  race_name: string;
+  venue: string;
+  post_time: string | null;
+  num_horses: number;
+  distance: number;
+  surface: string;
+}
+
+interface DBHorse {
+  horse_no: number;
+  post_no: number;
+  horse_name: string;
+  ball_count: number | null;
+  jockey: string | null;
+  win_odds: number | string | null;
+}
+
 // Mock Data matching the seed SQL exactly
 const MOCK_RACES: Race[] = [
   {
@@ -304,7 +323,7 @@ export async function getRaces(): Promise<Race[]> {
         .order("post_time", { ascending: true });
       if (error) throw error;
       if (data && data.length > 0) {
-        return data.map((r: any) => ({
+        return (data as DBRace[]).map((r) => ({
           race_id: r.race_id,
           race_name: r.race_name,
           venue: r.venue,
@@ -334,7 +353,7 @@ export async function getHorses(raceId: string): Promise<Horse[]> {
         .order("horse_no", { ascending: true });
       if (error) throw error;
       if (data && data.length > 0) {
-        return data.map((h: any) => ({
+        return (data as DBHorse[]).map((h) => ({
           horse_no: h.horse_no,
           post_no: h.post_no,
           horse_name: h.horse_name,
