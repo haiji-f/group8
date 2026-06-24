@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { getRaces, getHorses } from "../../api/raceService";
 import type { Race, Horse } from "../../types";
 import { getGateColor } from "../../utils/colors";
@@ -31,7 +31,6 @@ export const RaceSelectionView: React.FC<RaceSelectionViewProps> = ({ onSelectRa
         const data = await getRaces();
         setRaces(data);
         if (data.length > 0) {
-          // Pre-select first race's date and venue
           setSelectedDate(data[0].race_date);
           setSelectedVenue(data[0].venue);
           setSelectedRace(data[0]);
@@ -46,51 +45,92 @@ export const RaceSelectionView: React.FC<RaceSelectionViewProps> = ({ onSelectRa
     loadRaces();
   }, []);
 
-  // Filter races by date and venue
+  // Fetch horses whenever selectedRace changes.
+  // Async work is done inside loadHorses, so no setState is called synchronously.
+  const selectedRaceId = selectedRace?.race_id ?? null;
+  useEffect(() => {
+    if (!selectedRaceId) {
+      return;
+    }
+    let cancelled = false;
+    async function loadHorses() {
+      try {
+        setLoadingHorses(true);
+        const data = await getHorses(selectedRaceId as string);
+        if (!cancelled) {
+          setHorses(data);
+        }
+      } catch (err) {
+        console.error(err);
+        if (!cancelled) {
+          setError("出走馬情報の取得に失敗しました。");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingHorses(false);
+        }
+      }
+    }
+    loadHorses();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedRaceId]);
+
+  // Filter races by date and venue (derived, no effect needed)
   const filteredRaces = races.filter(
     (race) => race.race_date === selectedDate && race.venue === selectedVenue
   );
 
-  // Update selectedRace when filters change
-  useEffect(() => {
-    if (races.length === 0 || !selectedDate || !selectedVenue) return;
+  // ── Event handlers update all related state together (no cascading effects) ──
 
-    const matches = races.filter(
-      (race) => race.race_date === selectedDate && race.venue === selectedVenue
-    );
-
-    if (matches.length > 0) {
-      // Keep selection if it is in the matches, otherwise pick first match
-      if (!selectedRace || !matches.some((m) => m.race_id === selectedRace.race_id)) {
-        setSelectedRace(matches[0]);
+  const handleDateChange = useCallback(
+    (date: string, allRaces: Race[]) => {
+      setSelectedDate(date);
+      // Keep current venue if it has races on the new date, otherwise clear
+      const venueRaces = allRaces.filter(
+        (r) => r.race_date === date && r.venue === selectedVenue
+      );
+      if (venueRaces.length > 0) {
+        setSelectedRace(venueRaces[0]);
+        setHorses([]);
+      } else {
+        // Try to find any venue that has races on this date
+        const anyRace = allRaces.find((r) => r.race_date === date);
+        if (anyRace) {
+          setSelectedVenue(anyRace.venue);
+          setSelectedRace(anyRace);
+          setHorses([]);
+        } else {
+          setSelectedRace(null);
+          setHorses([]);
+        }
       }
-    } else {
-      setSelectedRace(null);
-    }
-  }, [selectedDate, selectedVenue, races]);
+    },
+    [selectedVenue]
+  );
 
-  // Fetch horses when selectedRace changes
-  useEffect(() => {
-    if (!selectedRace) {
-      setHorses([]);
-      return;
-    }
-    const selectedRaceId = selectedRace.race_id;
-
-    async function loadHorses() {
-      try {
-        setLoadingHorses(true);
-        const data = await getHorses(selectedRaceId);
-        setHorses(data);
-      } catch (err) {
-        console.error(err);
-        setError("出走馬情報の取得に失敗しました。");
-      } finally {
-        setLoadingHorses(false);
+  const handleVenueChange = useCallback(
+    (venue: string, allRaces: Race[]) => {
+      setSelectedVenue(venue);
+      const venueRaces = allRaces.filter(
+        (r) => r.race_date === selectedDate && r.venue === venue
+      );
+      if (venueRaces.length > 0) {
+        setSelectedRace(venueRaces[0]);
+        setHorses([]);
+      } else {
+        setSelectedRace(null);
+        setHorses([]);
       }
-    }
-    loadHorses();
-  }, [selectedRace]);
+    },
+    [selectedDate]
+  );
+
+  const handleSelectRace = useCallback((race: Race) => {
+    setSelectedRace(race);
+    setHorses([]);
+  }, []);
 
   const handleStartSim = () => {
     if (selectedRace && horses.length > 0) {
@@ -226,7 +266,7 @@ export const RaceSelectionView: React.FC<RaceSelectionViewProps> = ({ onSelectRa
                   value={selectedDate}
                   onChange={(e) => {
                     sound.playClick();
-                    setSelectedDate(e.target.value);
+                    handleDateChange(e.target.value, races);
                   }}
                   className="custom-date-input"
                 />
@@ -238,7 +278,7 @@ export const RaceSelectionView: React.FC<RaceSelectionViewProps> = ({ onSelectRa
                     className={`date-chip-btn ${selectedDate === date ? "selected" : ""}`}
                     onClick={() => {
                       sound.playClick();
-                      setSelectedDate(date);
+                      handleDateChange(date, races);
                     }}
                   >
                     {formatDateStr(date)}
@@ -263,7 +303,7 @@ export const RaceSelectionView: React.FC<RaceSelectionViewProps> = ({ onSelectRa
                     className={`venue-selector-btn ${selectedVenue === venue ? "selected" : ""} ${!hasRaces ? "inactive" : ""}`}
                     onClick={() => {
                       sound.playClick();
-                      setSelectedVenue(venue);
+                      handleVenueChange(venue, races);
                     }}
                   >
                     <span className="venue-name-text">{venue}</span>
@@ -288,7 +328,7 @@ export const RaceSelectionView: React.FC<RaceSelectionViewProps> = ({ onSelectRa
                     key={race.race_id}
                     race={race}
                     isSelected={selectedRace?.race_id === race.race_id}
-                    onSelect={setSelectedRace}
+                    onSelect={handleSelectRace}
                   />
                 ))}
               </div>
