@@ -9,6 +9,7 @@ interface DBRace {
   num_horses: number;
   distance: number;
   surface: string;
+  created_at?: string;
 }
 
 interface DBHorse {
@@ -30,6 +31,7 @@ const MOCK_RACES: Race[] = [
     num_horses: 8,
     distance: 2200,
     track_type: "Turf",
+    race_date: "2026-06-28",
   },
   {
     race_id: "2026_002",
@@ -39,6 +41,7 @@ const MOCK_RACES: Race[] = [
     num_horses: 10,
     distance: 2400,
     track_type: "Turf",
+    race_date: "2026-05-31",
   },
   {
     race_id: "2026_003",
@@ -48,6 +51,7 @@ const MOCK_RACES: Race[] = [
     num_horses: 12,
     distance: 2500,
     track_type: "Turf",
+    race_date: "2026-12-27",
   },
 ];
 
@@ -314,6 +318,12 @@ const MOCK_TRIO_ODDS: Record<string, number> = {
   "2026_001_8_7_5": 25400.0,
 };
 
+const RACE_DATES: Record<string, string> = {
+  "2026_001": "2026-06-28",
+  "2026_002": "2026-05-31",
+  "2026_003": "2026-12-27",
+};
+
 export async function getRaces(): Promise<Race[]> {
   if (supabase) {
     try {
@@ -331,6 +341,7 @@ export async function getRaces(): Promise<Race[]> {
           num_horses: r.num_horses,
           distance: r.distance,
           track_type: r.surface === "芝" ? "Turf" : "Dirt",
+          race_date: RACE_DATES[r.race_id] || (r.created_at ? r.created_at.substring(0, 10) : "2026-06-24"),
         }));
       }
     } catch (e) {

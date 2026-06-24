@@ -151,6 +151,29 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.race-cards-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.race-cards-grid::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.01);
+  border-radius: 999px;
+}
+
+.race-cards-grid::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+}
+
+.race-cards-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--accent-rgb, 59, 130, 246), 0.35);
 }
 
 .footer-meta-note {
@@ -211,3 +234,274 @@
     gap: 24px;
   }
 }
+
+/* Sequential Filter Styles */
+.filter-step-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.filter-step-section:last-of-type {
+  border-bottom: none;
+}
+
+.filter-step-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.step-number-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(var(--accent-rgb, 59, 130, 246), 0.1);
+  border: 1px solid var(--accent, #3b82f6);
+  color: var(--accent, #3b82f6);
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: 0 0 8px rgba(var(--accent-rgb, 59, 130, 246), 0.2);
+}
+
+.filter-step-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+/* Date filter */
+.date-filter-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.custom-date-picker-container {
+  display: flex;
+  align-items: center;
+  background: rgba(15, 15, 17, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 12px;
+  gap: 8px;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.custom-date-picker-container:focus-within {
+  border-color: var(--accent, #3b82f6);
+  box-shadow: 0 0 10px rgba(var(--accent-rgb, 59, 130, 246), 0.15);
+}
+
+.date-input-icon {
+  color: #64748b;
+}
+
+.custom-date-input {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  width: 100%;
+  cursor: pointer;
+}
+
+/* Customize datepicker calendar icon styling */
+.custom-date-input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.6;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.custom-date-input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+.quick-date-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.date-chip-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.date-chip-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.date-chip-btn.selected {
+  background: rgba(var(--accent-rgb, 59, 130, 246), 0.15);
+  border-color: var(--accent, #3b82f6);
+  color: var(--accent, #3b82f6);
+  box-shadow: 0 0 12px rgba(var(--accent-rgb, 59, 130, 246), 0.2);
+}
+
+/* Venue filter */
+.venue-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 480px) {
+  .venue-selector-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.venue-selector-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.venue-selector-btn:hover:not(.inactive) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.venue-selector-btn.selected {
+  background: rgba(var(--accent-rgb, 59, 130, 246), 0.12);
+  border-color: var(--accent, #3b82f6);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 4px 15px rgba(var(--accent-rgb, 59, 130, 246), 0.15), 0 0 8px rgba(var(--accent-rgb, 59, 130, 246), 0.2);
+}
+
+.venue-selector-btn.inactive {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.venue-name-text {
+  font-size: 13px;
+}
+
+.active-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #10b981; /* green active dot */
+  box-shadow: 0 0 6px #10b981;
+}
+
+/* Empty States */
+.no-races-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px dashed rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  text-align: center;
+  gap: 8px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.no-races-icon {
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.no-races-heading {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin: 0;
+}
+
+.no-races-subheading {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+/* Left empty panel styling */
+.detail-panel-empty {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 380px;
+  justify-content: center;
+  align-items: flex-start;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.empty-title {
+  color: #475569 !important;
+  font-weight: 700 !important;
+  font-size: 22px !important;
+}
+
+.empty-graphic-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 40px;
+  margin-bottom: auto;
+}
+
+.empty-graphic-ring {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 2px dashed rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: spin 20s linear infinite;
+}
+
+.empty-graphic-ball {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent, #3b82f6);
+  box-shadow: 0 0 15px var(--accent, #3b82f6);
+  position: absolute;
+  top: 0;
+  left: calc(50% - 8px);
+}
+

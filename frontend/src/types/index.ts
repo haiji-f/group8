@@ -6,6 +6,7 @@ export interface Race {
   num_horses: number;
   distance: number;
   track_type: "Turf" | "Dirt";
+  race_date: string;
 }
 
 export interface Horse {
