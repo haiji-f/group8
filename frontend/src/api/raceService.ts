@@ -341,7 +341,8 @@ export async function getRaces(): Promise<Race[]> {
           num_horses: r.num_horses,
           distance: r.distance,
           track_type: r.surface === "芝" ? "Turf" : "Dirt",
-          race_date: RACE_DATES[r.race_id] || (r.created_at ? r.created_at.substring(0, 10) : "2026-06-24"),
+          race_date:
+            RACE_DATES[r.race_id] || (r.created_at ? r.created_at.substring(0, 10) : "2026-06-24"),
         }));
       }
     } catch (e) {

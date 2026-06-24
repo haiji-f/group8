@@ -79,7 +79,7 @@ export const RaceSelectionView: React.FC<RaceSelectionViewProps> = ({ onSelectRa
 
   // Filter races by date and venue (derived, no effect needed)
   const filteredRaces = races.filter(
-    (race) => race.race_date === selectedDate && race.venue === selectedVenue
+    (race) => race.race_date === selectedDate && race.venue === selectedVenue,
   );
 
   // ── Event handlers update all related state together (no cascading effects) ──
@@ -88,9 +88,7 @@ export const RaceSelectionView: React.FC<RaceSelectionViewProps> = ({ onSelectRa
     (date: string, allRaces: Race[]) => {
       setSelectedDate(date);
       // Keep current venue if it has races on the new date, otherwise clear
-      const venueRaces = allRaces.filter(
-        (r) => r.race_date === date && r.venue === selectedVenue
-      );
+      const venueRaces = allRaces.filter((r) => r.race_date === date && r.venue === selectedVenue);
       if (venueRaces.length > 0) {
         setSelectedRace(venueRaces[0]);
         setHorses([]);
@@ -107,15 +105,13 @@ export const RaceSelectionView: React.FC<RaceSelectionViewProps> = ({ onSelectRa
         }
       }
     },
-    [selectedVenue]
+    [selectedVenue],
   );
 
   const handleVenueChange = useCallback(
     (venue: string, allRaces: Race[]) => {
       setSelectedVenue(venue);
-      const venueRaces = allRaces.filter(
-        (r) => r.race_date === selectedDate && r.venue === venue
-      );
+      const venueRaces = allRaces.filter((r) => r.race_date === selectedDate && r.venue === venue);
       if (venueRaces.length > 0) {
         setSelectedRace(venueRaces[0]);
         setHorses([]);
@@ -124,7 +120,7 @@ export const RaceSelectionView: React.FC<RaceSelectionViewProps> = ({ onSelectRa
         setHorses([]);
       }
     },
-    [selectedDate]
+    [selectedDate],
   );
 
   const handleSelectRace = useCallback((race: Race) => {
@@ -180,7 +176,8 @@ export const RaceSelectionView: React.FC<RaceSelectionViewProps> = ({ onSelectRa
                 <span className="selection-label">選択中のレース</span>
                 <h2 className="selected-race-title">{selectedRace.race_name}</h2>
                 <p className="selected-race-meta">
-                  {selectedRace.race_date} ({selectedRace.venue}) / {selectedRace.track_type === "Turf" ? "芝" : "ダート"}
+                  {selectedRace.race_date} ({selectedRace.venue}) /{" "}
+                  {selectedRace.track_type === "Turf" ? "芝" : "ダート"}
                   {selectedRace.distance}m / {selectedRace.post_time} / {selectedRace.num_horses}頭
                 </p>
               </div>
@@ -296,7 +293,9 @@ export const RaceSelectionView: React.FC<RaceSelectionViewProps> = ({ onSelectRa
             </div>
             <div className="venue-selector-grid">
               {allVenues.map((venue) => {
-                const hasRaces = races.some((r) => r.race_date === selectedDate && r.venue === venue);
+                const hasRaces = races.some(
+                  (r) => r.race_date === selectedDate && r.venue === venue,
+                );
                 return (
                   <button
                     key={venue}
@@ -337,7 +336,8 @@ export const RaceSelectionView: React.FC<RaceSelectionViewProps> = ({ onSelectRa
                 <AlertCircle className="no-races-icon" size={36} />
                 <h4 className="no-races-heading">レースがありません</h4>
                 <p className="no-races-subheading">
-                  選択された日付 ({selectedDate ? selectedDate.replace(/-/g, "/") : "---"}) と競馬場 ({selectedVenue || "---"}) に開催予定のレースはありません。
+                  選択された日付 ({selectedDate ? selectedDate.replace(/-/g, "/") : "---"}) と競馬場
+                  ({selectedVenue || "---"}) に開催予定のレースはありません。
                 </p>
               </div>
             )}

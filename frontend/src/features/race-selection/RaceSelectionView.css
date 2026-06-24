@@ -397,7 +397,9 @@
   border-color: var(--accent, #3b82f6);
   color: #ffffff;
   font-weight: 700;
-  box-shadow: 0 4px 15px rgba(var(--accent-rgb, 59, 130, 246), 0.15), 0 0 8px rgba(var(--accent-rgb, 59, 130, 246), 0.2);
+  box-shadow:
+    0 4px 15px rgba(var(--accent-rgb, 59, 130, 246), 0.15),
+    0 0 8px rgba(var(--accent-rgb, 59, 130, 246), 0.2);
 }
 
 .venue-selector-btn.inactive {
@@ -504,4 +506,3 @@
   top: 0;
   left: calc(50% - 8px);
 }
-
