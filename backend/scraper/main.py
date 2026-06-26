@@ -16,7 +16,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from scraper import calculator, db
-from scraper.odds_scraper import fetch_trifecta_odds
+from scraper.odds_scraper import fetch_trifecta_odds, fetch_win_odds
 from scraper.race_list import fetch_race_ids
 from scraper.race_scraper import scrape_race
 
@@ -103,6 +103,15 @@ def main() -> None:
                 logger.error("Failed to scrape race %s: %s", netkeiba_race_id, exc)
                 total_errors += 1
                 continue
+
+            try:
+                win_odds_map = fetch_win_odds(netkeiba_race_id)
+                for h in horses:
+                    h["win_odds"] = win_odds_map.get(h["horse_no"])
+            except Exception as exc:
+                logger.warning(
+                    "Failed to fetch win odds for %s: %s", netkeiba_race_id, exc
+                )
 
             try:
                 horses = calculator.calc_ball_counts(horses)

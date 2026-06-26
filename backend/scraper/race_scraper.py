@@ -1,7 +1,7 @@
 import logging
 import re
 import time
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 import requests
 from bs4 import BeautifulSoup
@@ -17,6 +17,8 @@ HEADERS = {
 }
 
 # netkeiba 競馬場コード → 英語キー / 日本語名
+_WEEKDAYS_JP = ["月", "火", "水", "木", "金", "土", "日"]
+
 _VENUE_EN = {
     "01": "sapporo",
     "02": "hakodate",
@@ -62,7 +64,6 @@ def scrape_race(netkeiba_race_id: str, race_date: str) -> tuple[dict, list[dict]
 
     resp = requests.get(url, headers=HEADERS, timeout=30)
     resp.raise_for_status()
-    resp.encoding = "EUC-JP"
     soup = BeautifulSoup(resp.text, "html.parser")
 
     venue_code = netkeiba_race_id[4:6]
@@ -124,16 +125,6 @@ def scrape_race(netkeiba_race_id: str, race_date: str) -> tuple[dict, list[dict]
                 else None
             )
 
-            win_odds: float | None = None
-            for cls in ("Txt_R", "Odds"):
-                odds_el = tr.find(class_=cls)
-                if odds_el:
-                    try:
-                        win_odds = float(odds_el.get_text(strip=True).replace(",", ""))
-                    except ValueError:
-                        pass
-                    break
-
             horses.append(
                 {
                     "race_id": race_id,
@@ -141,15 +132,17 @@ def scrape_race(netkeiba_race_id: str, race_date: str) -> tuple[dict, list[dict]
                     "post_no": post_no,
                     "horse_name": horse_name,
                     "jockey": jockey,
-                    "win_odds": win_odds,
+                    "win_odds": None,
                 }
             )
 
     scraped_at = datetime.now(UTC).isoformat()
+    day_of_week = _WEEKDAYS_JP[date.fromisoformat(race_date).weekday()]
     race = {
         "race_id": race_id,
         "netkeiba_race_id": netkeiba_race_id,
         "race_date": race_date,
+        "day_of_week": day_of_week,
         "venue": venue_jp,
         "race_no": race_no,
         "race_name": race_name,
@@ -160,71 +153,8 @@ def scrape_race(netkeiba_race_id: str, race_date: str) -> tuple[dict, list[dict]
         "scraped_at": scraped_at,
     }
 
-    # win_odds が全て None の場合（過去レース）は結果ページから確定オッズを補完
-    if all(h["win_odds"] is None for h in horses):
-        confirmed = _fetch_confirmed_win_odds(netkeiba_race_id)
-        if confirmed:
-            for h in horses:
-                h["win_odds"] = confirmed.get(h["horse_no"])
-
     time.sleep(1.5)
     return race, horses
-
-
-def _fetch_confirmed_win_odds(netkeiba_race_id: str) -> dict[int, float]:
-    """結果ページから確定単勝オッズを取得して {馬番: オッズ} を返す。"""
-    url = f"https://race.netkeiba.com/race/result.html?race_id={netkeiba_race_id}"
-    try:
-        resp = requests.get(url, headers=HEADERS, timeout=30)
-        resp.raise_for_status()
-        resp.encoding = "EUC-JP"
-        soup = BeautifulSoup(resp.text, "html.parser")
-
-        table = soup.find("table", class_="RaceTable01")
-        if not table:
-            return {}
-
-        result: dict[int, float] = {}
-        for tr in table.find_all("tr")[1:]:
-            odds_el = tr.find(class_=lambda c: c and "Odds" in c and "Txt_R" in c)
-
-            # 馬番は "Num Txt_C" クラスのセル
-            num_cells = tr.find_all(class_="Txt_C")
-            horse_no = None
-            for cell in num_cells:
-                classes = cell.get("class", [])
-                if "Num" in classes and "Txt_C" in classes:
-                    try:
-                        horse_no = int(cell.get_text(strip=True))
-                    except ValueError:
-                        pass
-                    break
-
-            if horse_no is None:
-                continue
-
-            # 単勝オッズは "Odds Txt_R" クラスのセル
-            odds_el = tr.find(
-                lambda tag: tag.name == "td"
-                and "Odds" in (tag.get("class") or [])
-                and "Txt_R" in (tag.get("class") or [])
-            )
-            if odds_el:
-                try:
-                    txt = odds_el.get_text(strip=True).replace(",", "")
-                    result[horse_no] = float(txt)
-                except ValueError:
-                    pass
-
-        logger.info("Confirmed win odds fetched: %d horses", len(result))
-        time.sleep(1.5)
-        return result
-
-    except Exception as exc:
-        logger.warning(
-            "Failed to fetch confirmed odds for %s: %s", netkeiba_race_id, exc
-        )
-        return {}
 
 
 def _text_int(tr, class_prefix: str) -> int | None:

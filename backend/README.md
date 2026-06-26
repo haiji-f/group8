@@ -32,6 +32,7 @@ CREATE TABLE races (
   race_id           text PRIMARY KEY,
   netkeiba_race_id  text,
   race_date         date NOT NULL,
+  day_of_week       text NOT NULL,
   venue             text NOT NULL,
   race_no           smallint NOT NULL,
   race_name         text,
@@ -68,6 +69,12 @@ CREATE TABLE trifecta_odds (
   UNIQUE (race_id, rank1, rank2, rank3)
 );
 CREATE INDEX idx_trifecta_race_id ON trifecta_odds (race_id);
+```
+
+既存テーブルにカラムを追加する場合は以下を実行する。
+
+```sql
+ALTER TABLE races ADD COLUMN day_of_week text NOT NULL DEFAULT '';
 ```
 
 ---

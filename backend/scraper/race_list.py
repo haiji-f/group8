@@ -25,7 +25,6 @@ def fetch_race_ids(date_str: str) -> list[str]:
 
     resp = requests.get(url, headers=HEADERS, timeout=30)
     resp.raise_for_status()
-    resp.encoding = "EUC-JP"
 
     race_ids = sorted(set(re.findall(r"race_id=(\d{12})", resp.text)))
     logger.info("Found %d race(s) for %s", len(race_ids), date_str)

@@ -36,6 +36,36 @@ _HEADERS = {
 _API_BASE = "https://race.netkeiba.com/api/api_get_jra_odds.html"
 
 
+def fetch_win_odds(netkeiba_race_id: str) -> dict[int, float]:
+    """単勝オッズを API から取得して {馬番: オッズ} を返す。"""
+    url = (
+        f"{_API_BASE}?pid=api_get_jra_odds&input=UTF-8&output=jsonp"
+        f"&callback=cb&race_id={netkeiba_race_id}"
+        f"&type=1&action=init&sort=odds&compress=1"
+    )
+    resp = requests.get(url, headers=_HEADERS, timeout=30)
+    resp.raise_for_status()
+
+    json_str = re.sub(r"^cb\(|\)$", "", resp.text.strip())
+    payload = __import__("json").loads(json_str)
+    raw_odds = __import__("json").loads(
+        zlib.decompress(base64.b64decode(payload["data"]))
+    )
+
+    result: dict[int, float] = {}
+    for key, val in raw_odds["odds"].get("1", {}).items():
+        try:
+            odds_value = float(val[0].replace(",", ""))
+            if odds_value > 0:
+                result[int(key)] = odds_value
+        except (ValueError, IndexError):
+            continue
+
+    logger.info("Win odds fetched: %d horses for %s", len(result), netkeiba_race_id)
+    time.sleep(1.5)
+    return result
+
+
 def fetch_trifecta_odds(race_id: str, netkeiba_race_id: str) -> list[dict]:
     """
     三連複 API から取得し、6通りの順列に展開して三連単オッズを返す。

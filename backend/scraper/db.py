@@ -25,13 +25,16 @@ def upsert_horses(client: Client, horses: list[dict]) -> None:
     client.table("horses").upsert(horses, on_conflict="race_id,horse_no").execute()
 
 
-def delete_old_data(client: Client, days_to_keep: int = 14) -> int:
-    """race_date が cutoff より古いレースと関連データを削除する。"""
-    cutoff = (date.today() - timedelta(days=days_to_keep)).isoformat()
+def delete_old_data(client: Client) -> int:
+    """今週の土曜より前のレースと関連データを削除する。"""
+    today = date.today()
+    days_since_sat = (today.weekday() - 5) % 7
+    this_saturday = today - timedelta(days=days_since_sat)
+    cutoff = this_saturday.isoformat()
     resp = client.table("races").select("race_id").lt("race_date", cutoff).execute()
     old_ids = [r["race_id"] for r in resp.data]
     if not old_ids:
-        logger.info("delete_old_data: no old data (cutoff: %s)", cutoff)
+        logger.info("delete_old_data: no old data (cutoff=%s)", cutoff)
         return 0
     for i in range(0, len(old_ids), BATCH_SIZE):
         batch = old_ids[i : i + BATCH_SIZE]
