@@ -1,0 +1,8 @@
+# 競馬スクレイパー 毎週金曜 21:00 JST に実行
+# パスは実際の環境に合わせて変更すること
+
+# JST サーバー (Asia/Tokyo) の場合:
+0 21 * * 5 /bin/bash /path/to/group8/backend/cron/run.sh
+
+# UTC サーバーの場合 (JST = UTC+9 → 21:00 JST = 12:00 UTC):
+# 0 12 * * 5 /bin/bash /path/to/group8/backend/cron/run.sh
