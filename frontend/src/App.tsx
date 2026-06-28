@@ -35,7 +35,7 @@ function App() {
       {/* Premium Header */}
       <header className="app-header">
         <div className="header-logo">
-          <span className="logo-text">TRIO DROP</span>
+          <span className="logo-text">YosoUma</span>
           <span className="logo-subtext">
             {step === 1 && "1 レース選択"}
             {step === 2 && "2 ボール抽選"}
